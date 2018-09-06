@@ -1,0 +1,39 @@
+#!/bin/sh
+
+# Do not remove the following exclusions unless you really know what you are doing
+add_exclusion /proc/*
+add_exclusion /dev/*
+add_exclusion /sys/*
+add_exclusion /run/*
+
+# The following exclusions helps to prevent large images
+add_exclusion /tmp/*
+add_exclusion /var/tmp/*
+add_exclusion /mnt/*
+add_exclusion /media/*
+add_exclusion /cdrom/*
+add_exclusion /iso
+add_exclusion --keep-dirs /var/log/*
+add_exclusion /var/cache/yum
+add_exclusion /var/cache/apt/archives
+add_exclusion /root/.cache
+add_exclusion /root/.gvfs
+add_exclusion /root/.local/share/Trash
+add_exclusion /home/*/.cache
+add_exclusion /home/*/.gvfs
+add_exclusion /home/*/.local/share/Trash
+
+# The following exclusions are recommended if you want to shrink your image, but can skip some crucial files
+# add_exclusion /var/cache
+# add_exclusion /var/spool
+# add_exclusion /var/lib/docker
+# add_exclusion /var/lib/kubelet
+# add_exclusion /var/lib/yum
+# add_exclusion /var/lib/rpm
+# add_exclusion /var/lib/mlocate
+# add_exclusion /var/lib/dpkg/info
+# add_exclusion /var/lib/apt/lists
+# add_exclusion /usr/src
+# add_exclusion /usr/local/src
+# add_exclusion /home/*/.wine
+# add_exclusion /home/*/.local/share/Steam

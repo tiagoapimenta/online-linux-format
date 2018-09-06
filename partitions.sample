@@ -1,0 +1,11 @@
+#!/bin/sh
+
+add_partition 400M /boot ext4
+add_partition --lvm rhel root 5G / ext4
+add_partition --lvm rhel log 2G /var/log btrfs compress-force=lzo
+add_partition 512M /swapfile swap
+# add_partition --lvm rhel docker 10G /var/lib/docker btrfs
+# add_partition --lvm rhel swap --swap 2G
+# add_partition --tmp /tmp nodev,nosuid,noatime
+# add_partition --tmp /var/tmp nodev,nosuid,noatime
+use_extra_space_as_lvm=1
