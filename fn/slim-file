@@ -1,0 +1,56 @@
+#!/bin/sh
+
+set -e
+
+atexit() {
+	local ec=$?
+	if [ -n "$tmp" -a -e "$tmp" ]; then
+		rm -rf "$tmp"
+	fi
+	exit $ec
+}
+
+trap atexit EXIT INT TERM
+
+tmp=$(mktemp -d)
+
+find /var/lib \
+	-maxdepth 1 \
+	-mindepth 1 \
+	-type d \
+	! -name 'apt' \
+	! -name 'rpm' \
+	! -name 'yum' \
+	! -name 'dpkg' \
+	! -name 'mlocate' \
+	! -name 'docker' \
+	! -name 'kubelet' \
+	-print |
+	sort -u > "$tmp/all"
+
+xargs -r du -sk < "$tmp/all" |
+	awk '
+$1 > 1024 {
+	print $2
+}
+' |
+	sort -u > "$tmp/big"
+
+{
+	printf 'etc\n'
+	comm -23 "$tmp/all" "$tmp/big" | sed 's@^/@@'
+} |
+	XZ_OPT=9e tar \
+		--create \
+		--xz \
+		--sparse \
+		--preserve-permissions \
+		--directory / \
+		--file "$tmp/slim.tar.xz" \
+		--files-from -
+
+mv "$tmp/slim.tar.xz" '/tmp/slim.tar.xz'
+
+if [ -n "$SUDO_UID" ]; then
+	chown "$SUDO_UID:$SUDO_GID" '/tmp/slim.tar.xz'
+fi

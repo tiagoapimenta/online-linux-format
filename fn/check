@@ -1,0 +1,120 @@
+#!/bin/sh
+
+# others: grep
+# optional: iptables ip modprobe kexec lvm
+# reset: systemctl sfdisk|fdisk
+
+check=$(cat <<\CMDS
+set -e
+
+if [ "${PATH#*/sbin}" = "$PATH" ]; then
+	printf 'Warning: PATH does not include sbin.\n' >&2
+	export PATH="$PATH:/usr/sbin:/sbin"
+fi
+
+for name in \
+	mktemp \
+	cat \
+	tar \
+	xz \
+	base64 \
+	sudo \
+	chmod \
+	script \
+	id \
+	find \
+	rm \
+	cp \
+	sort \
+	sed \
+	awk \
+	xargs \
+	du \
+	comm
+do
+	if ! type "$name" > /dev/null 2>&1; then
+		printf 'Missing command "%s"!\n' "$name" >&2
+		exit 1
+	fi
+done
+
+root=0
+rpass=0
+rtty=0
+
+if [ $(id -u) -eq 0 ]; then
+	root=1
+else
+	if ! sudo -n id > /dev/null 2>&1; then
+		if script -qefc 'sudo -n id; exit $?' /dev/null < /dev/random > /dev/null 2>&1; then
+			rtty=1
+		else
+CMDS
+if [ -n "$pass" ]; then
+	cat <<CMDS
+			mypass="$(printf '%s' "$pass" | sed 's@\\@\\\\@g;s@"@\\"@')"
+CMDS
+	cat <<\CMDS
+			if printf '%s\n' "$mypass" | sudo -S id > /dev/null 2>&1; then
+				rpass=1
+			elif printf '%s\n' "$mypass" | script -qefc 'sudo -S id; exit $?' /dev/null > /dev/null 2>&1; then
+				rpass=1
+				rtty=1
+			else
+				printf 'Could not become root using sudo!\n' >&2
+				exit 1
+			fi
+CMDS
+else
+	cat <<\CMDS
+			printf 'No password given to test sudo.\n' >&2
+			exit 1
+CMDS
+fi
+cat <<\CMDS
+		fi
+	fi
+fi
+
+atexit() {
+	local ec=$?
+	if [ -n "$tmp" -a -e "$tmp" ]; then
+		rm -rf "$tmp"
+	fi
+	exit $ec
+}
+
+trap atexit EXIT INT TERM
+
+root_run() {
+	if [ $root -ne 0 ]; then
+		sh -es
+	elif [ $rpass -eq 0 ]; then
+		if [ $rtty -eq 0 ]; then
+			sudo -n sh -es
+		else
+			cat - /dev/random | script -qefc 'sudo -n sh -es; exit $?' /dev/null
+		fi
+	else
+		if [ -z "$tmp" ]; then
+			tmp=$(mktemp -d)
+		fi
+		if [ ! -s "$tmp/sudopass" ]; then
+			cat > "$tmp/sudopass" <<\EOF
+#!/bin/sh
+
+printf '%s\n' "$MYSUDOPASS"
+EOF
+			chmod +x "$tmp/sudopass"
+		fi
+		export SUDO_ASKPASS="$tmp/sudopass"
+		export MYSUDOPASS="$mypass"
+		if [ $rtty -eq 0 ]; then
+			sudo -A sh -es
+		else
+			script -qefc 'sudo -A sh -es; exit $?' /dev/null
+		fi
+	fi
+}
+CMDS
+)

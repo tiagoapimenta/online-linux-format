@@ -1,0 +1,71 @@
+#!/bin/sh
+
+atexit() {
+	local ec=$?
+	if [ -n "$tmp" -a -e "$tmp" ]; then
+		rm -rf "$tmp"
+	fi
+	exit $ec
+}
+
+trap atexit EXIT INT TERM
+
+remote_run() {
+	local host="$1" pass="$2" port=22
+
+	if [ -n "${host##*:}" ]; then
+		port=${host##*:}
+		host=${host%:*}
+	fi
+
+	if [ -n "$pass" ]; then
+		if [ -z "$tmp" ]; then
+			tmp=$(mktemp -d)
+		fi
+		if [ ! -s "$tmp/sshpass" ]; then
+			cat > "$tmp/sshpass" <<\EOF
+#!/bin/sh
+
+printf '%s\n' "$MYSSHPASS"
+EOF
+			chmod +x "$tmp/sshpass"
+		fi
+		export SSH_ASKPASS="$tmp/sshpass"
+		export MYSSHPASS="$pass"
+		if [ -z "$DISPLAY" ]; then
+			export DISPLAY=dummydisplay:0
+		fi
+	fi
+
+	setsid -w ssh "-p$port" "$host" sh -es
+}
+
+remote_cp() {
+	local host="$1" pass="$2" source="$3" target="$4" port=22
+
+	if [ -n "${host##*:}" ]; then
+		port=${host##*:}
+		host=${host%:*}
+	fi
+
+	if [ -n "$pass" ]; then
+		if [ -z "$tmp" ]; then
+			tmp=$(mktemp -d)
+		fi
+		if [ ! -s "$tmp/sshpass" ]; then
+			cat > "$tmp/sshpass" <<\EOF
+#!/bin/sh
+
+printf '%s\n' "$MYSSHPASS"
+EOF
+			chmod +x "$tmp/sshpass"
+		fi
+		export SSH_ASKPASS="$tmp/sshpass"
+		export MYSSHPASS="$pass"
+		if [ -z "$DISPLAY" ]; then
+			export DISPLAY=dummydisplay:0
+		fi
+	fi
+
+	setsid -w scp "-P$port" "$host:$source" "$target"
+}

@@ -1,0 +1,33 @@
+#!/bin/sh
+
+set -e
+
+dir=$(dirname "$(readlink -f "$0")")
+
+action=
+host=
+pass=
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+	backup|slim)
+		action=$1
+	;;
+	*)
+		if [ "$action" = backup -o "$action" = slim ]; then
+			if [ -z "$host" ]; then
+				host=$1
+			elif [ -z "$pass" ]; then
+				pass=$1
+			else
+				printf 'Unknown argument "%s"!\n' "$1" >&2
+				exit 1
+			fi
+		fi
+	esac
+	if ! shift; then
+		break
+	fi
+done
+
+. "$dir/fn/$action"

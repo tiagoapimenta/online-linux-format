@@ -1,0 +1,38 @@
+#!/bin/sh
+
+if [ -z "$host" ]; then
+	printf 'No host given!\n' >&2
+	exit 1
+fi
+
+. "$dir/fn/connect"
+
+. "$dir/fn/check"
+
+file="slim-${host}-$(date +%F-%H-%M-%S).tar.xz"
+
+remote_run "$host" "$pass" <<CMDS
+$check
+
+root_run <<ROOT
+\$(
+base64 -d <<\\EOF | xz -dc
+$(
+xz -9ec "$dir/fn/slim-file" | base64
+)
+EOF
+)
+ROOT
+CMDS
+
+if [ ! -d "$dir/backups" ]; then
+	mkdir "$dir/backups"
+fi
+
+remote_cp "$host" "$pass" '/tmp/slim.tar.xz' "$dir/backups/$file"
+
+printf 'Backup generated on "backups/%s".\n' "$file"
+
+remote_run "$host" "$pass" <<\CMDS
+rm -rf '/tmp/slim.tar.xz'
+CMDS
