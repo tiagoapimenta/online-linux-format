@@ -10,7 +10,7 @@ Before continue be aware that these operation is extremely risky, I give no warr
 
 This tool offer a backup routine that simply create a tarball file with some important files, the creation of a backup do not prevent your server to break, but can help to recreate another machine with the same files it in case of a lost.
 
-There is two types offered by this tool, a slim one, and a full one: The slim one copies only some configuration files, you will require to reinstall the server apart, it is inteded only to help reconfigure it; The full backup can be used as base image and ca be applyed to others servers, but can be very large.
+There is two types offered by this tool, a slim one, and a full one: The slim one copies only some configuration files, you will require to reinstall the server apart, it is inteded only to help reconfigure it; The full backup can be used as base image and can be applyed to others servers, but can be very large.
 
 Copy the file `exclusions.sample` to `exclusions` and edit it in order to ignore large directories (can be found with `du -hd2 ... | sort -rhk1 | head`), or even to not ignore some default ignored files such as logs and caches.
 
@@ -26,6 +26,6 @@ The password is optional, but if the it is not provided make sure you have confi
 
 Copy the file `partitions.sample` to `partitions` and edit it to fit your needs.
 
-## Throubleshooting
+## Troubleshooting
 
 This tool is inteed to stop working in case of any command to fail, it can happen if some required kernel module is not provided, as this tool is ofered with no guarantee there is nothing you can do in some cases, but even so you can file a bug with your user case and perhaps, someday, I can provide a workaround, be as detailned as possible about your server configuration.

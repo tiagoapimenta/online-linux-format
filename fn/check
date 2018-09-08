@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # others: grep
-# optional: iptables ip modprobe kexec lvm
+# optional: iptables ip modprobe kexec lvm dracut
 # reset: systemctl sfdisk|fdisk
 
 check=$(cat <<\CMDS
@@ -93,7 +93,8 @@ root_run() {
 		if [ $rtty -eq 0 ]; then
 			sudo -n sh -es
 		else
-			cat - /dev/random | script -qefc 'sudo -n sh -es; exit $?' /dev/null
+			read pid _ < /proc/self/stat
+			script -qefc "sudo -n sh -e '/proc/$pid/fd/0'; exit \$?" /dev/null < /dev/random
 		fi
 	else
 		if [ -z "$tmp" ]; then
@@ -112,7 +113,8 @@ EOF
 		if [ $rtty -eq 0 ]; then
 			sudo -A sh -es
 		else
-			script -qefc 'sudo -A sh -es; exit $?' /dev/null
+			read pid _ < /proc/self/stat
+			script -qefc "sudo -A sh -e '/proc/$pid/fd/0'; exit \$?" /dev/null < /dev/random
 		fi
 	fi
 }
